@@ -1,7 +1,10 @@
 # You should replace this variables with your names
 # Finally you need to rename this file to config.vars
 
-export GCP_PROJECT_ID="your-brightcove-live-project-name"
+export GCP_PROJECT_ID="yout-project-name"
 export GCP_DATASET_NAME="ccu-dataset"
 export GCP_DATASET_EXPIRATION_S=864000
 export GCP_TABLE_NAME="heartbeat"
+
+export GCP_BIGQUERY_LOCATION="US"
+export GCP_APP_LOCATION="us-central"
