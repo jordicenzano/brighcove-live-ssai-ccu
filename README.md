@@ -92,6 +92,16 @@ Example response:
 ```
 It means in the last minute 212 players were requesting video
 
+7. If you want to know the CCU of job (BCOV_LIVE_JOB_ID) for a time range (replacing: YOUR_API_SECRET, GCP_CLOUD_FUNCTION_REGION, GCP_PROJECT_NAME, GCP_CLOUD_FUNCTION_NAME, BCOV_LIVE_JOB_ID)
+```
+curl -v --header "x-api-key: YOUR_API_SECRET" https://GCP_CLOUD_FUNCTION_REGION-GCP_PROJECT_NAME.cloudfunctions.net/GCP_CLOUD_FUNCTION_NAME?jobid=BCOV_LIVE_JOB_ID\&in\=EPOCH_START\&out\=EPOCH_END
+```
+Example response:
+```
+[[{"time":{"value":"2018-07-29T16:09:00.000Z"},"ccu":1},{"time":{"value":"2018-07-29T16:10:00.000Z"},"ccu":1}]]
+```
+You get one datapoint with the CCU in that minute that are different than 0
+
 # Accuracy
 * The Heartbeat beacon is created and queued when any SSAI session requests a chunk, so every target duration (usually between 2 and 15 seconds). This means that a playback session has been created and the player is actively requesting media data.
 This beacon is added to the tracking events queue and fired with the rest of tracking events, the AVG time in this queue should be few seconds, but under heavy load it is possible to have longer times then we'll lose accuracy (see [Next steps](#next-steps) to fix that)

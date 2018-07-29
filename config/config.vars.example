@@ -9,4 +9,4 @@ export GCP_TABLE_NAME="heartbeat"
 export GCP_BIGQUERY_LOCATION="US"
 export GCP_APP_LOCATION="us-central"
 
-export GCP_CLOUD_FUNCTION_API_CURRENT_NAME="lastminccu"
+export GCP_CLOUD_FUNCTION_API_CURRENT_NAME="ccudata"
