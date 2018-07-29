@@ -4,9 +4,10 @@ But could also be used player side with implementing a simple video-js plug-in, 
 
 IMPORTANT NOTE: This project is creating resources on the user's GCP (Google Cloud Platform), if you measure CCU of high audiences streams you can incur in very high GCP costs. Please see [Next steps](#next-steps) section to see several ways to dramatically reduce the GCP cost of this solution
 
-# Introduction
+# Block diagram
 
-TODO: Block diagram
+![Block diagram](./pics/RT-CCU.png "Block diagram")
+
 
 # Deployment
 1. Clone this repo:
