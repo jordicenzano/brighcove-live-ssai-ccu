@@ -1,5 +1,6 @@
 # brighcove-live-ssai-ccu
-This project is just a POC (proof of concept) to show a possible way to calculate the real time CCU (concurrent viewers) for any Brightcove live stream with SSAI (Server Side Ad Insertion) active
+This project is just a POC (proof of concept) to show a possible way to calculate the real time CCU (concurrent viewers) for any Brightcove live stream with SSAI (Server Side Ad Insertion) active.
+But could also be used player side with implementing a simple video-js plug-in, and then it will work for any stream from any platform
 
 IMPORTANT NOTE: This project is creating resources on the user's GCP (Google Cloud Platform), if you measure CCU of high audiences streams you can incur in very high GCP costs. Please see [Next steps](#next-steps) section to see several ways to dramatically reduce the GCP cost of this solution
 
