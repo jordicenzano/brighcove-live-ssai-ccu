@@ -43,7 +43,7 @@ curl -X POST \
   -H 'x-api-key: YOUR_API_KEY' \
   -d '{
     "beacon_urls": [{
-        "beacon_url": "https://GCP_PROJECT_NAME.appspot.com/{{random.uuid}}/{{job.job_id}}/{{session.session_id}}/VCIDFAKEVALUE/{{server.timestamputc}}/heartbeat",
+        "beacon_url": "https://GCP_PROJECT_NAME.appspot.com/{{random.uuid}}/{{job.job_id}}/{{session.session_id}}/{{account.vc_id}}/{{server.timestamputc}}/heartbeat",
         "beacon_type": "Heartbeat"
     }]
 }'
@@ -110,7 +110,10 @@ This beacon is added to the tracking events queue and fired with the rest of tra
 * The beacon information in this approach is sent server side, so ad blockers can NOT block these requests. They should be more accurate than player side beaconing
 
 # Next steps
-* IMPORTANT: In Brighcove live we should prioritize the Heartbeat beacon (or make it synchronous?)
+* IMPORTANT, in Brighcove live we could:
+  * Prioritize the Heartbeat beacon (or make it synchronous?)
+  * (?) Add headers to beacons (to secure the communication beacon - analytics)
+  * (?) Add the replacement to SSAI API to send epoch seconds and epoch ms (without decimal point)
 * We could develop easy video-js / Brightcove player plug-in and take advantage of the same system to calculate real time CCU
 * A good property of this system could be compare server side vs player side beaconing. Could be a good way to measure the number if adblockers for a specific job / customer
 * Configure `./collector/app.yaml.base` to autoscale (configure just for testing, low cost)
