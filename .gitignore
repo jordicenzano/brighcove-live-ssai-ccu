@@ -1,0 +1,14 @@
+.DS_Store
+.idea
+
+secrets/*
+!secrets/*.vars.example
+
+config/config.vars
+
+collector/node_modules/
+collector/app.yaml
+collector/package-lock.json
+
+api/node_modules/
+api/package-lock.json

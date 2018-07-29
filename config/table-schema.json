@@ -1,0 +1,32 @@
+[
+  {
+    "description": "Epoch timestamp in ms",
+    "name": "ts",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "description": "Unique request id",
+    "name": "guid",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "description": "Job id",
+    "name": "jobid",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "description": "Session id (viewed id)",
+    "name": "sessionid",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "description": "Videocloud id",
+    "name": "vc_id",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  }
+]
