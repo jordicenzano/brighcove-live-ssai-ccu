@@ -6,7 +6,7 @@ IMPORTANT NOTE: This project is creating resources on the user's GCP (Google Clo
 
 # Block diagram
 
-![Block diagram](./pics/RT-CCU.png "Block diagram")
+![Block diagram](./pics/RT-CCU-v2.png "Block diagram")
 
 
 # Deployment
