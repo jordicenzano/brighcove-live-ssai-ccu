@@ -71,7 +71,7 @@ app.get('/:guid/:jobid/:sessionid/:account_billing_id/:tsepoch/heartbeat', funct
     const jobid = req.params.jobid;
     const sessionid = req.params.sessionid;
     const account_billing_id = req.params.account_billing_id;
-    const tsepoch_ms = parseInt(req.params.tsepoch) * 1000;
+    const tsepoch_ms = parseInt(req.params.tsepoch * 1000);
 
     const log_prefix = `${guid};${jobid};${sessionid};${account_billing_id};`;
 

@@ -21,5 +21,5 @@ exports.checkSimpleNumber = function (num, max_length, min_length = 0) {
     if ( (str.length > max_length) || (str.length < min_length))
         return false;
 
-    return str.match(new RegExp(/^[0-9]*$/)) != null;
+    return str.match(new RegExp(/^[0-9]+[[\.][0-9]+]*$/)) != null;
 };
