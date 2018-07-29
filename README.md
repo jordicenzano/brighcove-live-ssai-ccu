@@ -105,7 +105,7 @@ You get one datapoint with the CCU in that minute that are different than 0
 # Accuracy
 * The Heartbeat beacon is created and queued when any SSAI session requests a chunk, so every target duration (usually between 2 and 15 seconds). This means that a playback session has been created and the player is actively requesting media data.
 This beacon is added to the tracking events queue and fired with the rest of tracking events, the AVG time in this queue should be few seconds, but under heavy load it is possible to have longer times then we'll lose accuracy (see [Next steps](#next-steps) to fix that)
-* We stablished a 1 minute window to calculate the CCU, our CCU could be defined as: *The number of players that are requesting media chunks during 1 minute*. Since we have NOT found any standard to define the CCU, if you what to increase your CCU without lying you can just increase the window time from 1 min to 1h for example.
+* We stablished a 1 minute window to calculate the CCU, our CCU could be defined as: **The number of players that are requesting media chunks during 1 minute**. Since we have NOT found any standard to define the CCU, if you what to increase your CCU without lying you can just increase the window time from 1 min to 1h for example.
 * The beacon information in this approach is sent server side, so ad blockers can NOT block these requests. They should be more accurate than player side beaconing
 
 # Next steps
@@ -117,3 +117,8 @@ This beacon is added to the tracking events queue and fired with the rest of tra
 * Use an API cache to do not query the BigQuery for any repeated request (we can crate cache hash based on all GET params)
 * Add API capacity to query CCU from - to, then you should get an array of datapoints (one datapoint per minute)
 * Use BigQuery partition table to increase efficiency and reduce costs
+* Data reduction, for a prod service we should plan a data reduction process, susch as:
+  * Every 1h (just in case beacons are delayed) aggregate all CCU per min into a new table (one-min-time-jobid-table)
+  * Every 24h aggregate all CCU per min into a new table (ten-min-jobid-tanble)
+  * Every 7d aggregate all CCU per ten min into a new table (hour-jobid-tanble)
+  * Ans so on... and the older data on those tables should expire
