@@ -1,12 +1,27 @@
 # You should replace this variables with your names
 # Finally you need to rename this file to config.vars
 
+# BQ DATA
 export GCP_PROJECT_ID="yout-project-name"
-export GCP_DATASET_NAME="ccudataset"
-export GCP_DATASET_EXPIRATION_S=864000
-export GCP_TABLE_NAME="heartbeat"
-
+export GCP_DATASET="ccudataset"
+export GCP_TABLE="heartbeat"
 export GCP_BIGQUERY_LOCATION="US"
+
+export GCP_DATASET_EXPIRATION_S=172800
+
+# Collector data
 export GCP_APP_LOCATION="us-central"
 
+# Cloud functions data
 export GCP_CLOUD_FUNCTION_API_CURRENT_NAME="ccudata"
+export GCP_CLOUD_FUNCTION_DATA_AGGR_CURRENT_NAME="dataaggregation"
+export GCP_CLOUD_FUNCTION_DATA_REDUX_CURRENT_NAME="datareductio"
+
+# Datastore (used in data aggregation
+export GCP_DS_KIND="live"
+
+# Data aggregation sliding window size in seconds
+export MAX_BEACON_DELAY_S=1800
+
+# CCU aggregation period (1min)
+CCU_AGGREGATION_PERIOD_MS=60000

@@ -10,5 +10,12 @@ collector/node_modules/
 collector/app.yaml
 collector/package-lock.json
 
-api/node_modules/
-api/package-lock.json
+collector-pub-sub/node_modules/
+collector-pub-sub/app.yaml
+collector-pub-sub/package-lock.json
+
+cf-api/node_modules/
+cf-api/package-lock.json
+
+cf-dataaggr/node_modules/
+cf-dataaggr/package-lock.json

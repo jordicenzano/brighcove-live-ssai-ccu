@@ -13,10 +13,6 @@ const utils = require('./utils');
 // Imports the Google Cloud client library
 const BigQuery = require('@google-cloud/bigquery');
 
-//TODO: Add readme and some kind of disclaimer saying that this is a simple POC
-// POC NOT designed to work for large audiences.
-// To use it in large audiences we need to do some cost optimization / data partitioning / add cache at API, if NOT it could create high GCP costs
-
 // Creating webserver
 const express = require('express');
 const app = express();
@@ -27,29 +23,33 @@ const app = express();
 const GCP_PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT; // From GCP
 const GCP_DATASET = process.env.GCP_DATASET;
 const GCP_TABLE = process.env.GCP_TABLE;
-const SHARED_HEARTBEAT_SECRET = process.env.SHARED_HEARTBEAT_SECRET || "";
+const SHARED_BEACON_SECRET = process.env.SHARED_BEACON_SECRET || "";
 
-
-console.log(`CONFIGGCP;;;;GCPProjectID:${GCP_PROJECT_ID},GCPProjectID:${GCP_DATASET},GCPProjectID:${GCP_TABLE}`);
+console.log(logToString('CONFIGGCP','', `GCPProjectID:${GCP_PROJECT_ID},GCP_DATASET:${GCP_DATASET},GCP_TABLE:${GCP_TABLE}`));
 
 // Constants
 const APP_LISTEN_PORT = process.env.PORT || 8080; //Comes from GCP
 const APP_FIRE_PERIOD_MS = process.env.APP_FIRE_PERIOD_MS;
 const APP_MAX_QUEUE_BEFORE_FIRE = process.env.APP_MAX_QUEUE_BEFORE_FIRE;
 
-console.log(`CONFIGAPP;;;;APPPort:${APP_LISTEN_PORT},APPFirePeriodMs:${APP_FIRE_PERIOD_MS},MaxQueueBeforeFire:${APP_MAX_QUEUE_BEFORE_FIRE}`);
+console.log(logToString('CONFIGAPP', '', `APPPort:${APP_LISTEN_PORT},APPFirePeriodMs:${APP_FIRE_PERIOD_MS},MaxQueueBeforeFire:${APP_MAX_QUEUE_BEFORE_FIRE}`));
 
 // Global vars
 const datapoints = [];
 let htimeout = null;
+
+// Creates a BQ client
+const bigquery = new BigQuery({
+    projectId: GCP_PROJECT_ID,
+});
 
 // Receive beacon
 app.get('/:guid/:jobid/:sessionid/:account_billing_id/:tsepoch/heartbeat', function (req, res, next) {
     const start_exec = new Date();
 
     // Check if the request is legit if we enable api validation
-    if (SHARED_HEARTBEAT_SECRET !== "") {
-        if (SHARED_HEARTBEAT_SECRET !== req.get('x-api-key'))
+    if ((SHARED_BEACON_SECRET !== "")&&(SHARED_BEACON_SECRET !== "none")) {
+        if (SHARED_BEACON_SECRET !== req.get('x-api-key'))
             return next(createError(401, 'Request NOT authorized'));
     }
 
@@ -57,9 +57,7 @@ app.get('/:guid/:jobid/:sessionid/:account_billing_id/:tsepoch/heartbeat', funct
     if (utils.checkSimpleGUIDString(req.params.guid) === false)
         return next(createError(400, 'GUID wrong format'));
 
-    const guid = req.params.guid;
-
-    console.log(req.params.guid + ";;;;Received heartbeat");
+    console.log(logToString('APP', req.params.guid, 'Received heartbeat'));
 
     const err = checkInputParams(req.params);
     if (err !== null)
@@ -68,26 +66,23 @@ app.get('/:guid/:jobid/:sessionid/:account_billing_id/:tsepoch/heartbeat', funct
     if (utils.checkSimpleGUIDString(req.params.jobid) === false)
         return next(new Error("Job id wrong format"));
 
-    const jobid = req.params.jobid;
-    const sessionid = req.params.sessionid;
-    const account_billing_id = req.params.account_billing_id;
-    const tsepoch_ms = parseInt(req.params.tsepoch * 1000);
+    // Create datapoint
+    const dp = createDatapointFromReqParams(req.params);
 
-    const log_prefix = `${guid};${jobid};${sessionid};${account_billing_id};`;
+    datapoints.push(dp);
+
+    if (datapoints.length >= APP_MAX_QUEUE_BEFORE_FIRE) {
+        //setImmediate(fireDatapoints);
+        fireDatapoints();
+    }
+    else {
+        if ((htimeout === null) && (APP_FIRE_PERIOD_MS > 0))
+            htimeout = setTimeout(fireDatapoints, APP_FIRE_PERIOD_MS);
+    }
 
     const dur_exec = new Date() - start_exec;
 
-    datapoints.push(createDatapoint(tsepoch_ms, guid, jobid, sessionid, account_billing_id));
-
-    console.log(log_prefix + "Heartbeat processed in " + dur_exec);
-
-    if (datapoints.length >= APP_MAX_QUEUE_BEFORE_FIRE) {
-        setImmediate(fireDatapoints);
-    }
-    else {
-        if (htimeout === null)
-            htimeout = setTimeout(fireDatapoints, APP_FIRE_PERIOD_MS);
-    }
+    console.log(logToString('APP', '', `Heartbeat processed & inserted in ${dur_exec} ms`,dp));
 
     return res.send("");
 });
@@ -103,8 +98,7 @@ app.use(function (error, req, res, next) {
 });
 
 // Start webserver
-app.listen(APP_LISTEN_PORT, () => console.log(`HTTP;;;;App listening on port ${APP_LISTEN_PORT}!`));
-
+app.listen(APP_LISTEN_PORT, () => console.log(logToString('HTTP', '', `App listening on port ${APP_LISTEN_PORT}!`)));
 
 // Error helper
 function createError(status, message) {
@@ -119,8 +113,8 @@ function createError(status, message) {
 function checkInputParams (params) {
     let err = null;
 
-    if (utils.checkSimpleGUIDString(params.sessionid) === false)
-        err = createError(400, 'Session id wrong format');
+    if (utils.checkSimpleGUIDString(params.jobid) === false)
+        err = createError(400, 'Job id wrong format');
 
     if (utils.checkSimpleGUIDString(params.sessionid) === false)
         err = createError(400, 'Session id wrong format');
@@ -136,24 +130,23 @@ function checkInputParams (params) {
 
 // Fire all datapoints
 function fireDatapoints() {
-    const log_prefix = "BIGQUERY;;;;";
-
-    // Creates a client
-    const bigquery = new BigQuery({
-        projectId: GCP_PROJECT_ID,
-    });
-
     // Inserts data into a table
+
+    if (datapoints.length <= 0)
+        return;
+
     bigquery
         .dataset(GCP_DATASET)
         .table(GCP_TABLE)
         .insert(datapoints)
         .then(() => {
-            console.log(`${log_prefix}Inserted ${datapoints.length} rows`);
+            console.log(logToString('BQ', '', `Inserted ${datapoints.length} rows`));
         })
         .catch(err => {
 
             //TODO: retries?
+            // Or save into gs files and have a cron task that reingest those later
+            // resilient to a BQ outage
 
             if (err && err.name === 'PartialFailureError') {
                 if (err.errors && err.errors.length > 0) {
@@ -161,7 +154,7 @@ function fireDatapoints() {
                     err.errors.forEach(err => console.error(err));
                 }
             } else {
-                console.error(`${log_prefix}ERROR:`, err);
+                console.error(logToString('BQ', '', 'Error: ' + err));
             }
         })
         .then(() => {
@@ -172,12 +165,24 @@ function fireDatapoints() {
 }
 
 // Utils
-function createDatapoint(tsepoch_ms, guid, jobid, sessionid, account_billing_id) {
+function createDatapointFromReqParams(params) {
     return {
-        ts: tsepoch_ms,
-        guid: guid,
-        jobid: jobid,
-        sessionid: sessionid,
-        vc_id: account_billing_id
+        ts: parseInt(params.tsepoch * 1000),
+        rx_at: Date.now(),
+        guid: params.guid,
+        jobid: params.jobid,
+        sessionid: params.sessionid,
+        vc_id: params.account_billing_id
     };
 }
+
+// Message to string
+function logToString(prefix = "", guid = "", suffix = "", dp = null) {
+    let str = prefix + ';' + guid + ';;;;;' + suffix;
+
+    if (dp !== null) {
+        str = prefix + `;${dp.guid};${dp.jobid};${dp.sessionid};${dp.vc_id};${dp.ts};` + suffix;
+    }
+    return str;
+}
+

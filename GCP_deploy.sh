@@ -25,20 +25,24 @@ read -p "Press ENTER to continue ************************"
 # Set the current project ID
 gcloud config set project $GCP_PROJECT_ID
 
-# Create BIGQUERY resources
+# Create BIGQUERY dataset
 # TODO: It promts to select the default project, but tre project is alredy specified in the command (GCP bug?)
-bq --location=$GCP_BIGQUERY_LOCATION mk --dataset --default_table_expiration $GCP_DATASET_EXPIRATION_S --description "Data for CCU calculation" $GCP_PROJECT_ID:$GCP_DATASET_NAME
+bq --location=$GCP_BIGQUERY_LOCATION mk --dataset --default_table_expiration $GCP_DATASET_EXPIRATION_S --description "Data for CCU calculation" $GCP_PROJECT_ID:$GCP_DATASET
 
 # Create a BIGQUERY table for heartbeats and add schema
-bq mk --table --description "Table for the heartbeats beacons" $GCP_PROJECT_ID:$GCP_DATASET_NAME.$GCP_TABLE_NAME ./config/table-schema.json
+bq mk --table --description "Table for the heartbeats beacons" $GCP_PROJECT_ID:$GCP_DATASET.$GCP_TABLE ./config/table-schema.json
 
 # Deploy collector app
 cd $BASE_DIR/collector
 ./GCP_deploy_collector.sh
 
 # Create cloud function for the API
-cd $BASE_DIR/api
+cd $BASE_DIR/cf-api
 ./GCP_deploy_api.sh
+
+# Create cloud function for BQ Dagit dfota aggregation
+cd $BASE_DIR/cf-dataaggr
+./GCP_deploy_dataaggr.sh
 
 # Back to the origin
 cd $BASE_DIR

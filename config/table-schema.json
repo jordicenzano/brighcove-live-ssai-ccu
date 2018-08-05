@@ -1,7 +1,13 @@
 [
   {
-    "description": "Epoch timestamp in ms",
+    "description": "Epoch timestamp in ms when the beacon was created in the source",
     "name": "ts",
+    "type": "INTEGER",
+    "mode": "REQUIRED"
+  },
+  {
+    "description": "Epoch timestamp in ms when we received the beacon in the collector",
+    "name": "rx_at",
     "type": "INTEGER",
     "mode": "REQUIRED"
   },
