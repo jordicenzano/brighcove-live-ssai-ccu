@@ -1,13 +1,19 @@
 # brighcove-live-ssai-ccu
 This project is just a POC (proof of concept) to show a possible way to calculate the real time CCU (concurrent viewers) for any Brightcove live stream with SSAI (Server Side Ad Insertion) active.
 But could also be used player side with implementing a simple video-js plug-in, and then it will work for any stream from any platform
+This system autoscales in the collectors side, and keep the data in BigQuery as small as possible.
 
-IMPORTANT NOTE: This project is creating resources on the user's GCP (Google Cloud Platform), if you measure CCU of high audiences streams you can incur in very high GCP costs. Please see [Next steps](#next-steps) section to see several ways to dramatically reduce the GCP cost of this solution
+IMPORTANT NOTE: This project is creating resources on the user's GCP (Google Cloud Platform), if you measure CCU of high audiences streams you can incur in high GCP costs. Please see [Next steps](#next-steps) section to see several ways to reduce the GCP cost of this solution
 
 # Block diagram
 
+//TODO: Update 
 ![Block diagram](./pics/RT-CCU-v2.png "Block diagram")
 
+1. The collectors receives the beacons from the filed, those beacons can be sent from the Brightcove live backend (see example in [Deployment](#Deployment)), or from the player (needs some simple code there). Those collectors autoscale pretty quick according to appEngine config (//TODO link)
+2. The collectors sends almost instantaneously the beacons to a BigQuery table
+3. Every 30s the cloud function `TODO` is called and using BigQuery calculates the CCU data per jobid for last X minutes, aggregating this data in 1 minute slots (resolution). Finally inserts the results to GCP Datastore table
+4. Every 1min the cloud function `TODO` is called and removes data older than 1h on the BigQuery beacons table, keeping this table size small
 
 # Deployment
 1. Clone this repo:

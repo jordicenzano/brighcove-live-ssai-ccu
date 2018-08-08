@@ -15,7 +15,7 @@ export GCP_APP_LOCATION="us-central"
 # Cloud functions data
 export GCP_CLOUD_FUNCTION_API_CURRENT_NAME="ccudata"
 export GCP_CLOUD_FUNCTION_DATA_AGGR_CURRENT_NAME="dataaggregation"
-export GCP_CLOUD_FUNCTION_DATA_REDUX_CURRENT_NAME="datareductio"
+export GCP_CLOUD_FUNCTION_DATA_EXP_CURRENT_NAME="dataexp"
 
 # Datastore (used in data aggregation
 export GCP_DS_KIND="live"
@@ -23,5 +23,8 @@ export GCP_DS_KIND="live"
 # Data aggregation sliding window size in seconds
 export MAX_BEACON_DELAY_S=1800
 
-# CCU aggregation period (1min)
+# Data expiration in BQ, should be > MAX_BEACON_DELAY_S
+export BEACON_EXPIRATION_S=3600
+
+# CCU aggregation period in ms (1min)
 CCU_AGGREGATION_PERIOD_MS=60000

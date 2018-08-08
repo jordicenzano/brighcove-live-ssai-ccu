@@ -32,6 +32,8 @@ bq --location=$GCP_BIGQUERY_LOCATION mk --dataset --default_table_expiration $GC
 # Create a BIGQUERY table for heartbeats and add schema
 bq mk --table --description "Table for the heartbeats beacons" $GCP_PROJECT_ID:$GCP_DATASET.$GCP_TABLE ./config/table-schema.json
 
+# //TODO: Automate Datastore creation
+
 # Deploy collector app
 cd $BASE_DIR/collector
 ./GCP_deploy_collector.sh
@@ -40,9 +42,17 @@ cd $BASE_DIR/collector
 cd $BASE_DIR/cf-api
 ./GCP_deploy_api.sh
 
-# Create cloud function for BQ Dagit dfota aggregation
+# Create cloud function for BQ to DS data aggregation
 cd $BASE_DIR/cf-dataaggr
 ./GCP_deploy_dataaggr.sh
+
+# Create cloud function for BQ data expiration (cleanup)
+cd $BASE_DIR/cf-databqexp
+./GCP_deploy_databqexp.sh
+
+# Deploy clouf function scheduler
+cd $BASE_DIR/cron-cloudfunctions
+./GCP_deploy_cron_cloudfunctions.sh
 
 # Back to the origin
 cd $BASE_DIR

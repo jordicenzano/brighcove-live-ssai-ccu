@@ -1,0 +1,10 @@
+cron:
+- description: "Fire BQ data aggr query"
+  url: /fire?fireurl={{URL_TO_FIRE_RAW_DATA_AGGR}}
+  schedule: every 1 mins
+  target: croncloudfunctions
+
+- description: "Fire BQ data aggr query"
+  url: /fire?fireurl={{URL_TO_FIRE_RAW_DATA_EXP}}
+  schedule: every 1 mins
+  target: croncloudfunctions

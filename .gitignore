@@ -19,3 +19,6 @@ cf-api/package-lock.json
 
 cf-dataaggr/node_modules/
 cf-dataaggr/package-lock.json
+
+cron-cloudfunctions/app.yaml
+cron-cloudfunctions/cron.yaml

@@ -1,0 +1,25 @@
+{
+  "name": "live-streaming-ss-ccu-calculator-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "POC for livestreaming CCU calculator based and BCOV live SSAI signaling",
+  "main": "index.js",
+  "engines": {
+    "node": "8.x.x"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Brightcove",
+    "live",
+    "CCU",
+    "analytics"
+  ],
+  "author": "Jordi Cenzano",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@google-cloud/bigquery": "^1.3.0"
+  }
+}

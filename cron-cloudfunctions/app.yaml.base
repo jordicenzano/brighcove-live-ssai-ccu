@@ -1,0 +1,15 @@
+
+service: croncloudfunctions
+
+runtime: python27
+api_version: 1
+threadsafe: true
+
+env_variables:
+  SHARED_INTERNAL_SECRET: {{SHARED_INTERNAL_SECRET}}
+
+handlers:
+- url: /.*
+  script: main.app
+skip_files:
+  - ^node_modules/.*

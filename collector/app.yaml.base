@@ -12,6 +12,9 @@
 # limitations under the License.
 
 # [START app_yaml]
+
+# This is the default service
+
 runtime: nodejs
 env: flex
 
@@ -20,5 +23,8 @@ env_variables:
   GCP_TABLE: {{GCP_TABLE}}
   APP_FIRE_PERIOD_MS: 0
   APP_MAX_QUEUE_BEFORE_FIRE: 1
+
+skip_files:
+  - ^node_modules/.*
 
 # [END app_yaml]
