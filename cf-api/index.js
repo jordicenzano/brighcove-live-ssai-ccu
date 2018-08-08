@@ -42,6 +42,8 @@ exports.main = (req, res) => {
     // Ini big query
     const bigquery = new BigQuery({projectId: GCP_PROJECT_ID});
 
+    //TODO: Query Datastore NOT BQ!!!
+
     // The SQL query to run
     let sqlQuery = '';
     if ((time_in_ms > 0) && (time_out_ms > 0)) {
