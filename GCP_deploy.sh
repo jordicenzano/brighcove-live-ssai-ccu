@@ -33,6 +33,10 @@ bq --location=$GCP_BIGQUERY_LOCATION mk --dataset --default_table_expiration $GC
 bq mk --table --description "Table for the heartbeats beacons" $GCP_PROJECT_ID:$GCP_DATASET.$GCP_TABLE ./config/table-schema.json
 
 # //TODO: Automate Datastore creation
+# I think we do not have to do anything
+
+# Create DS index
+gcloud datastore create-indexes ./config/ds/index.yaml --quiet
 
 # Deploy collector app
 cd $BASE_DIR/collector

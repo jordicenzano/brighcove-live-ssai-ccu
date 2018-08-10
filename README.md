@@ -94,6 +94,8 @@ White down the `job_id` param that you will get from the previous request
 ```
 curl -v --header "x-api-key: YOUR_API_SECRET" https://GCP_CLOUD_FUNCTION_REGION-GCP_PROJECT_NAME.cloudfunctions.net/GCP_CLOUD_FUNCTION_NAME?jobid=BCOV_LIVE_JOB_ID
 ```
+
+//TODO: new format
 Example response:
 ```
 [[{"CCU":212}]] 

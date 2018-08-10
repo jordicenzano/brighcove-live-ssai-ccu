@@ -6,14 +6,15 @@
  * @param {!Object} req HTTP request context.
  * @param {!Object} res HTTP response context.
  */
-const BigQuery = require('@google-cloud/bigquery');
+
+// Imports the Google Cloud DS
+const Datastore = require('@google-cloud/datastore');
 
 exports.main = (req, res) => {
 
     // Load env vars
     const GCP_PROJECT_ID = process.env.GCP_PROJECT; // From GCP
-    const GCP_DATASET = process.env.GCP_DATASET;
-    const GCP_TABLE = process.env.GCP_TABLE;
+    const GCP_DS_KIND = process.env.GCP_DS_KIND;
     const SHARED_API_SECRET = process.env.SHARED_API_SECRET;
 
     // Check if the request is legit
@@ -27,8 +28,8 @@ exports.main = (req, res) => {
     const jobid = req.query.jobid;
 
     // Check time range
-    let time_in_ms = -1;
-    let time_out_ms = -1;
+    let time_out_ms = Date.now();
+    let time_in_ms = time_out_ms - (60 * 60 * 1000); // Default to 1h
 
     if (checkSimpleNumber (req.query.in || "NO", 64) === true)
         time_in_ms = req.query.in * 1000;
@@ -39,39 +40,39 @@ exports.main = (req, res) => {
     if (((time_in_ms > 0) && (time_out_ms < 0)) || ((time_in_ms < 0) && (time_out_ms > 0)) || (time_out_ms < time_in_ms))
         return res.status(400).send(new Error ('Invalid time rage (in - out)'));
 
-    // Ini big query
-    const bigquery = new BigQuery({projectId: GCP_PROJECT_ID});
+    // Creates a client
+    const datastore = new Datastore({ projectId: GCP_PROJECT_ID });
 
-    //TODO: Query Datastore NOT BQ!!!
+    // Create the date
+    const date_in = new Date(time_in_ms);
+    const date_out = new Date(time_out_ms);
 
-    // The SQL query to run
-    let sqlQuery = '';
-    if ((time_in_ms > 0) && (time_out_ms > 0)) {
-        // Range query
-        console.log("Running a range query for jobid: " + jobid + ". In(ms): " + time_in_ms + ". Out(ms): " + time_out_ms);
-        sqlQuery = 'SELECT TIMESTAMP_MILLIS(CAST(FLOOR(ts/60000) * 60000 AS INT64)) AS time, COUNT(distinct sessionid) as ccu FROM ' + GCP_DATASET + '.' + GCP_TABLE + ' WHERE jobid = "' + jobid + '" AND ts >= ' + time_in_ms + ' AND ts < ' + time_out_ms + ' group by time order by time asc';
-    }
-    else {
-        // Last min query
-        console.log("Running last min query for jobid: " + jobid);
-        sqlQuery = 'SELECT count(DISTINCT sessionid ) AS CCU FROM ' + GCP_DATASET + '.' + GCP_TABLE +' WHERE jobid = "' +  jobid + '" AND TIMESTAMP_MILLIS(ts) > TIMESTAMP_SUB(CURRENT_TIMESTAMP,INTERVAL 1 MINUTE)';
-    }
+    // Query Datastore index
+    const query = datastore.createQuery(GCP_DS_KIND)
+        .filter('jobid', '=', jobid)
+        .filter('time', '<', date_out)
+        .filter('time', '>=', date_in)
+         .order('time', {
+            descending: true,
+        });
 
-    // Query options list: https://cloud.google.com/bigquery/docs/reference/v2/jobs/query
-    const options = {
-        query: sqlQuery,
-        useLegacySql: false, // Use standard SQL syntax for queries.
-    };
-
-    // Runs the query
-    bigquery
-        .query(options)
+    datastore
+        .runQuery(query)
         .then(results => {
-            res.status(200).send(JSON.stringify(results));
+            // Task entities found.
+
+            const results_pointer = results[0];
+            const results_array = [];
+
+            results_pointer.forEach(elem => results_array.push(elem));
+
+            res.status(200).send(JSON.stringify(results_array));
+            return;
         })
         .catch(err => {
             console.error('ERROR:', err);
             res.status(500).send(err);
+            return;
         });
 };
 

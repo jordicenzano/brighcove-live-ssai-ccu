@@ -6,9 +6,11 @@
  * @param {!Object} req HTTP request context.
  * @param {!Object} res HTTP response context.
  */
+
+// Imports Google cloud BQ
 const BigQuery = require('@google-cloud/bigquery');
 
-// Imports the Google Cloud client library
+// Imports the Google Cloud DS
 const Datastore = require('@google-cloud/datastore');
 
 exports.main = (req, res) => {

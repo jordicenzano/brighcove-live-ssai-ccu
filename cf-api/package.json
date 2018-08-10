@@ -20,6 +20,6 @@
   "author": "Jordi Cenzano",
   "license": "GPL-3.0",
   "dependencies": {
-    "@google-cloud/bigquery": "^1.3.0"
+    "@google-cloud/datastore": "^1.4.1"
   }
 }

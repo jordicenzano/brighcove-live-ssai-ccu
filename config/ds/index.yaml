@@ -1,0 +1,8 @@
+indexes:
+
+- kind: live
+  ancestor: no
+  properties:
+  - name: jobid
+  - name: time
+    direction: desc
