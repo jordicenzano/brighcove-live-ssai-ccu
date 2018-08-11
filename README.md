@@ -1,19 +1,19 @@
 # brighcove-live-ssai-ccu
 This project is just a POC (proof of concept) to show a possible way to calculate the real time CCU (concurrent viewers) for any Brightcove live stream with SSAI (Server Side Ad Insertion) active.
-But could also be used player side with implementing a simple video-js plug-in, and then it will work for any stream from any platform
-This system autoscales in the collectors side, and keep the data in BigQuery as small as possible.
+But could also be used with player side beacons and then it will work for any stream from any platform. For [video-js](https://videojs.com/) is enough implementing a simple plug-in that sends that beacon info.
 
-IMPORTANT NOTE: This project is creating resources on the user's GCP (Google Cloud Platform), if you measure CCU of high audiences streams you can incur in high GCP costs. Please see [Next steps](#next-steps) section to see several ways to reduce the GCP cost of this solution
+This system autoscales automatically based on the number of input beacons, and it keeps the data in BigQuery as small as possible to minimize the costs there.
+
+IMPORTANT NOTE: This project is creating resources on the user's GCP (Google Cloud Platform), if you measure CCU of high audiences streams you can incur in high GCP costs.
 
 # Block diagram
 
-//TODO: Update 
-![Block diagram](./pics/RT-CCU-v2.png "Block diagram")
+![Block diagram](./pics/RT-CCU-v3.png "Block diagram")
 
-1. The collectors receives the beacons from the filed, those beacons can be sent from the Brightcove live backend (see example in [Deployment](#Deployment)), or from the player (needs some simple code there). Those collectors autoscale pretty quick according to appEngine config (//TODO link)
-2. The collectors sends almost instantaneously the beacons to a BigQuery table
-3. Every 30s the cloud function `TODO` is called and using BigQuery calculates the CCU data per jobid for last X minutes, aggregating this data in 1 minute slots (resolution). Finally inserts the results to GCP Datastore table
-4. Every 1min the cloud function `TODO` is called and removes data older than 1h on the BigQuery beacons table, keeping this table size small
+1. The collectors receives the beacons from the field, those beacons can be sent from the Brightcove live backend (see example in [Deployment](#Deployment)), or from the player (needs some simple code there). Those collectors autoscales pretty quick according to appEngine default config.
+2. The collectors sends almost instantaneously the beacons to a BigQuery table.
+3. Every 1min the cloud function [cf-dataaggr](/cf-dataaggr) is called and queries BigQuery table and calculates the CCU data per jobid for last 30 minutes, aggregating this data in 1 minute slots (resolution). Finally inserts the results to GCP Datastore table.
+4. Every 1min the cloud function [cf-databqexp](/cf-databqexp) is called and removes data older than 1h on the BigQuery beacons table, keeping this table size as small.
 
 # Deployment
 1. Clone this repo:
@@ -95,28 +95,49 @@ White down the `job_id` param that you will get from the previous request
 curl -v --header "x-api-key: YOUR_API_SECRET" https://GCP_CLOUD_FUNCTION_REGION-GCP_PROJECT_NAME.cloudfunctions.net/GCP_CLOUD_FUNCTION_NAME?jobid=BCOV_LIVE_JOB_ID
 ```
 
-//TODO: new format
 Example response:
 ```
-[[{"CCU":212}]] 
+[  
+   {  
+      "jobid":"6ddf7c8e669d43bb849d6a749643591b",
+      "last_rx_at":"2018-08-10T03:06:04.989Z",
+      "time":"2018-08-10T02:36:00.000Z",
+      "ccu":500
+   },
+   {  
+      "time":"2018-08-10T02:35:00.000Z",
+      "ccu":500,
+      "jobid":"6ddf7c8e669d43bb849d6a749643591b",
+      "last_rx_at":"2018-08-10T03:05:04.789Z"
+   },
+   {  
+      "time":"2018-08-10T02:34:00.000Z",
+      "ccu":500,
+      "jobid":"6ddf7c8e669d43bb849d6a749643591b",
+      "last_rx_at":"2018-08-10T03:04:04.587Z"
+   },
+   {  
+      "time":"2018-08-10T02:33:00.000Z",
+      "ccu":500,
+      "jobid":"6ddf7c8e669d43bb849d6a749643591b",
+      "last_rx_at":"2018-08-10T03:03:05.637Z"
+   }
+]
 ```
-It means in the last minute 212 players were requesting video
+In the response you can find one data point for the last hour that with CCU greater than 0 for the indicated jobid.
 
-7. If you want to know the CCU of job (BCOV_LIVE_JOB_ID) for a time range (replacing: YOUR_API_SECRET, GCP_CLOUD_FUNCTION_REGION, GCP_PROJECT_NAME, GCP_CLOUD_FUNCTION_NAME, BCOV_LIVE_JOB_ID)
+`last_rx_at` indicates the time when we received the last beacon for that processed minute. Good indicator for the generator - collector delay.
+
+7. If you want to know the CCU of job (BCOV_LIVE_JOB_ID) for a time range (replacing: YOUR_API_SECRET, GCP_CLOUD_FUNCTION_REGION, GCP_PROJECT_NAME, GCP_CLOUD_FUNCTION_NAME, BCOV_LIVE_JOB_ID). If you do not specify any time by default it will return the last 1 hour.
 ```
 curl -v --header "x-api-key: YOUR_API_SECRET" https://GCP_CLOUD_FUNCTION_REGION-GCP_PROJECT_NAME.cloudfunctions.net/GCP_CLOUD_FUNCTION_NAME?jobid=BCOV_LIVE_JOB_ID\&in\=EPOCH_START\&out\=EPOCH_END
 ```
-Example response:
-```
-[[{"time":{"value":"2018-07-29T16:09:00.000Z"},"ccu":1},{"time":{"value":"2018-07-29T16:10:00.000Z"},"ccu":1}]]
-```
-You get one datapoint with the CCU in that minute that are different than 0
 
 # Accuracy
 * The Heartbeat beacon is created and queued when any SSAI session requests a chunk, so every target duration (usually between 2 and 15 seconds). This means that a playback session has been created and the player is actively requesting media data.
-This beacon is added to the tracking events queue and fired with the rest of tracking events, the AVG time in this queue should be few seconds, but under heavy load it is possible to have longer times then we'll lose accuracy (see [Next steps](#next-steps) to fix that)
+This beacon is added to the tracking events queue and fired with the rest of tracking events, the AVG time in this queue should be few seconds, but under heavy load it is possible to have longer times then we'll lose accuracy (see [Next steps](#next-steps) to fix that), this problem only affects to server side queued beacons, does NOT affect to player side beacons.
 * We stablished a 1 minute window to calculate the CCU, our CCU could be defined as: **The number of players that are requesting media chunks during 1 minute**. Since we have NOT found any standard to define the CCU, if you what to increase your CCU without lying you can just increase the window time from 1 min to 1h for example.
-* The beacon information in this approach is sent server side, so ad blockers can NOT block these requests. They should be more accurate than player side beaconing
+* The beacon information in this approach is sent server side, so ad blockers can NOT block those requests. They should be more accurate than player side beaconing
 
 # Next steps
 * IMPORTANT, in Brighcove live we could:
@@ -125,13 +146,8 @@ This beacon is added to the tracking events queue and fired with the rest of tra
   * (?) Add the replacement to SSAI API to send epoch seconds and epoch ms (without decimal point)
 * We could develop easy video-js / Brightcove player plug-in and take advantage of the same system to calculate real time CCU
 * A good property of this system could be compare server side vs player side beaconing. Could be a good way to measure the number if adblockers for a specific job / customer
-* Configure `./collector/app.yaml.base` to autoscale (configure just for testing, low cost)
+* Improve the efficiency of the collector doing some kind of batch processing
+  * Perhaps using Dataflow and / or pub-sub
 * Use a new table to store the CCU values per minute & job, that way we only calculate them one (huge cost reduction)
-* Use an API cache to do not query the BigQuery for any repeated request (we can crate cache hash based on all GET params)
-* Add API capacity to query CCU from - to, then you should get an array of datapoints (one datapoint per minute)
+* Use an API cache in front of DataStore in order to avoid multiple queries there for the similar requests (we can crate cache hash based on all GET params)
 * Use BigQuery partition table to increase efficiency and reduce costs
-* Data reduction, for a prod service we should plan a data reduction process, susch as:
-  * Every 1h (just in case beacons are delayed) aggregate all CCU per min into a new table (one-min-time-jobid-table)
-  * Every 24h aggregate all CCU per min into a new table (ten-min-jobid-tanble)
-  * Every 7d aggregate all CCU per ten min into a new table (hour-jobid-tanble)
-  * Ans so on... and the older data on those tables should expire
