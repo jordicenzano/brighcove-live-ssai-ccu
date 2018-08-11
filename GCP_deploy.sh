@@ -19,7 +19,7 @@ gcloud projects create $GCP_PROJECT_ID
 
 echo "At this point you should enter into the GCP webconsole, select project $GCP_PROJECT_ID and:"
 echo "- Activate billing"
-echo "- Activate cloud functions"
+echo "- Activate cloud functions billing, and cloud functions API"
 read -p "Press ENTER to continue ************************"
 
 # Set the current project ID
@@ -31,12 +31,6 @@ bq --location=$GCP_BIGQUERY_LOCATION mk --dataset --default_table_expiration $GC
 
 # Create a BIGQUERY table for heartbeats and add schema
 bq mk --table --description "Table for the heartbeats beacons" $GCP_PROJECT_ID:$GCP_DATASET.$GCP_TABLE ./config/table-schema.json
-
-# //TODO: Automate Datastore creation
-# I think we do not have to do anything
-
-# Create DS index
-gcloud datastore create-indexes ./config/ds/index.yaml --quiet
 
 # Deploy collector app
 cd $BASE_DIR/collector
@@ -57,6 +51,12 @@ cd $BASE_DIR/cf-databqexp
 # Deploy clouf function scheduler
 cd $BASE_DIR/cron-cloudfunctions
 ./GCP_deploy_cron_cloudfunctions.sh
+
+# //TODO: Automate Datastore creation
+# I think we do not have to do anything
+
+# Create DS index
+gcloud datastore create-indexes ./config/ds/index.yaml --quiet
 
 # Back to the origin
 cd $BASE_DIR
