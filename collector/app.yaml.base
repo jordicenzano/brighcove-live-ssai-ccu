@@ -21,8 +21,6 @@ env: flex
 env_variables:
   GCP_DATASET: {{GCP_DATASET}}
   GCP_TABLE: {{GCP_TABLE}}
-  APP_FIRE_PERIOD_MS: 0
-  APP_MAX_QUEUE_BEFORE_FIRE: 1
 
 skip_files:
   - ^node_modules/.*

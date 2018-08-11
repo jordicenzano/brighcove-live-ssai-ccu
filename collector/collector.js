@@ -29,14 +29,8 @@ console.log(logToString('CONFIGGCP','', `GCPProjectID:${GCP_PROJECT_ID},GCP_DATA
 
 // Constants
 const APP_LISTEN_PORT = process.env.PORT || 8080; //Comes from GCP
-const APP_FIRE_PERIOD_MS = process.env.APP_FIRE_PERIOD_MS;
-const APP_MAX_QUEUE_BEFORE_FIRE = process.env.APP_MAX_QUEUE_BEFORE_FIRE;
 
-console.log(logToString('CONFIGAPP', '', `APPPort:${APP_LISTEN_PORT},APPFirePeriodMs:${APP_FIRE_PERIOD_MS},MaxQueueBeforeFire:${APP_MAX_QUEUE_BEFORE_FIRE}`));
-
-// Global vars
-const datapoints = [];
-let htimeout = null;
+console.log(logToString('CONFIGAPP', '', `APPPort:${APP_LISTEN_PORT}`));
 
 // Creates a BQ client
 const bigquery = new BigQuery({
@@ -69,22 +63,19 @@ app.get('/:guid/:jobid/:sessionid/:account_billing_id/:tsepoch/heartbeat', funct
     // Create datapoint
     const dp = createDatapointFromReqParams(req.params);
 
-    datapoints.push(dp);
+    // Fire datapoint
+    fireDatapoint(dp, function (err, data) {
+        const dur_exec = new Date() - start_exec;
 
-    if (datapoints.length >= APP_MAX_QUEUE_BEFORE_FIRE) {
-        //setImmediate(fireDatapoints);
-        fireDatapoints();
-    }
-    else {
-        if ((htimeout === null) && (APP_FIRE_PERIOD_MS > 0))
-            htimeout = setTimeout(fireDatapoints, APP_FIRE_PERIOD_MS);
-    }
+        if (err) {
+            return next(createError(500, "Error inserting data to BQ"));
+        }
+        else {
+            console.log(logToString('APP', '', `Heartbeat processed & inserted in ${dur_exec} ms`, data));
 
-    const dur_exec = new Date() - start_exec;
-
-    console.log(logToString('APP', '', `Heartbeat processed & inserted in ${dur_exec} ms`,dp));
-
-    return res.send("");
+            return res.send("");
+        }
+    });
 });
 
 //Handle Errors
@@ -129,18 +120,17 @@ function checkInputParams (params) {
 }
 
 // Fire all datapoints
-function fireDatapoints() {
+function fireDatapoint(dp, callback) {
     // Inserts data into a table
-
-    if (datapoints.length <= 0)
-        return;
 
     bigquery
         .dataset(GCP_DATASET)
         .table(GCP_TABLE)
-        .insert(datapoints)
+        .insert(dp)
         .then(() => {
-            console.log(logToString('BQ', '', `Inserted ${datapoints.length} rows`));
+            console.log(logToString('BQ', '', `Inserted 1 row`));
+
+            return callback(null, dp);
         })
         .catch(err => {
 
@@ -153,14 +143,12 @@ function fireDatapoints() {
                     console.log('BIGQUERY: Insert errors:');
                     err.errors.forEach(err => console.error(err));
                 }
-            } else {
+            }
+            else {
                 console.error(logToString('BQ', '', 'Error: ' + err));
             }
-        })
-        .then(() => {
-            // Remove datapoints & timeout
-            datapoints.length = 0;
-            htimeout = null;
+
+            return callback(err, dp);
         });
 }
 
@@ -185,4 +173,3 @@ function logToString(prefix = "", guid = "", suffix = "", dp = null) {
     }
     return str;
 }
-
