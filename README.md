@@ -1,5 +1,5 @@
 # brighcove-live-ssai-ccu
-This project is just a POC (proof of concept) to show a possible way to calculate the real time CCU (concurrent viewers) for any Brightcove live stream with SSAI (Server Side Ad Insertion) active.
+This project is just a POC (proof of concept) to show a possible way to calculate the **real time** CCU (concurrent viewers) for any Brightcove live stream with SSAI (Server Side Ad Insertion) active.
 But could also be used with player side beacons and then it will work for any stream from any platform. For [video-js](https://videojs.com/) is enough implementing a simple plug-in that sends that beacon info.
 
 This system autoscales automatically based on the number of input beacons, and it keeps the data in BigQuery as small as possible to minimize the costs there.
@@ -136,18 +136,17 @@ curl -v --header "x-api-key: YOUR_API_SECRET" https://GCP_CLOUD_FUNCTION_REGION-
 # Accuracy
 * The Heartbeat beacon is created and queued when any SSAI session requests a chunk, so every target duration (usually between 2 and 15 seconds). This means that a playback session has been created and the player is actively requesting media data.
 This beacon is added to the tracking events queue and fired with the rest of tracking events, the AVG time in this queue should be few seconds, but under heavy load it is possible to have longer times then we'll lose accuracy (see [Next steps](#next-steps) to fix that), this problem only affects to server side queued beacons, does NOT affect to player side beacons.
-* We stablished a 1 minute window to calculate the CCU, our CCU could be defined as: **The number of players that are requesting media chunks during 1 minute**. Since we have NOT found any standard to define the CCU, if you what to increase your CCU without lying you can just increase the window time from 1 min to 1h for example.
-* The beacon information in this approach is sent server side, so ad blockers can NOT block those requests. They should be more accurate than player side beaconing
+* We stablished a 1 minute window to calculate the CCU, our CCU could be defined as: **The number of players that are requesting media chunks during 1 minute**. Since we have NOT found any standard to define the CCU, if you want to increase your CCU without lying you can just increase the window time from 1 min to 1h for example.
+* The beacon information in this approach is sent server side, so ad blockers can NOT block those requests. It should be more accurate than player side beaconing.
 
 # Next steps
 * IMPORTANT, in Brighcove live we could:
-  * Prioritize the Heartbeat beacon (or make it synchronous?)
-  * (?) Add headers to beacons (to secure the communication beacon - analytics)
-  * (?) Add the replacement to SSAI API to send epoch seconds and epoch ms (without decimal point)
-* We could develop easy video-js / Brightcove player plug-in and take advantage of the same system to calculate real time CCU
-* A good property of this system could be compare server side vs player side beaconing. Could be a good way to measure the number if adblockers for a specific job / customer
-* Improve the efficiency of the collector doing some kind of batch processing
-  * Perhaps using Dataflow and / or pub-sub
-* Use a new table to store the CCU values per minute & job, that way we only calculate them one (huge cost reduction)
+  * Prioritize the Heartbeat beacon (or make it synchronous?).
+  * (?) Add headers to beacons (to secure the communication beacon - analytics).
+  * (?) Add the replacement to SSAI API to send epoch seconds and epoch ms (without decimal point).
+* We could develop easy video-js / Brightcove player plug-in and take advantage of the same system to calculate real time CCU.
+* A good property of this system could be compare server side vs player side beaconing. Could be a good way to measure the number if adblockers for a specific job / customer.
+* Improve the efficiency of the collector doing some kind of batch processing.
+  * Perhaps using Dataflow and / or pub-sub.
 * Use an API cache in front of DataStore in order to avoid multiple queries there for the similar requests (we can crate cache hash based on all GET params)
 * Use BigQuery partition table to increase efficiency and reduce costs
