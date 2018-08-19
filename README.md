@@ -1,7 +1,7 @@
 # brighcove-live-ssai-ccu
 This project is just a POC (proof of concept) to show a possible way to calculate the **real time** CCU (concurrent viewers) of any web resource, but it is focused to video streams.
 This code works out of the box for any Brightcove live stream with SSAI (Server Side Ad Insertion) active. The code can also receive analytics client side (from the player) and offer a data comparison (server side vs client side)
-If you want to use also client side data you should implement a player side plug-in and send a beacon (HTTP[s] GET) to the following address every 1min (or less) during playback, recommended to send it every 30s. For [video-js](https://videojs.com/) is enough implementing a simple plug-in that sends that beacon info.
+If you want to use also client side data you should implement a player side plug-in and send a beacon (HTTP[s] GET) to the following address every 1min (or less) during playback, recommended to send it every 30s. For [video-js](https://videojs.com/) is enough implementing a simple plug-in to do that.
 ```
 http://GCP_PROJECT_NAME.appspot.com/GUID/JOBID/SESSIONID/ACCOUNTID/EPOCH_S/csheartbeat
 ```
