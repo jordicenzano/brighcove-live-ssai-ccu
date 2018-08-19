@@ -7,7 +7,8 @@ export GCP_DATASET="ccudataset"
 export GCP_TABLE="heartbeat"
 export GCP_BIGQUERY_LOCATION="US"
 
-export GCP_DATASET_EXPIRATION_S=172800
+# Table expiration (0 = no expiration)
+export GCP_DATASET_EXPIRATION_S=0
 
 # Collector data
 export GCP_APP_LOCATION="us-central"

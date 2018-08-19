@@ -21,6 +21,8 @@ env: flex
 env_variables:
   GCP_DATASET: {{GCP_DATASET}}
   GCP_TABLE: {{GCP_TABLE}}
+  # Shared secret between beacon sender and collector
+  SHARED_BEACON_SERVER_SIDE_SECRET: {{SHARED_BEACON_SERVER_SIDE_SECRET}}
 
 skip_files:
   - ^node_modules/.*

@@ -7,6 +7,12 @@
  * @param {!Object} res HTTP response context.
  */
 
+// Beacon source ID in BiqQuery (should be the same used in collector)
+const enBeaconOriginFlag = {
+    CLIENT_SIDE: 'cs',
+    SERVER_SIDE: 'ss'
+};
+
 // Imports Google cloud BQ
 const BigQuery = require('@google-cloud/bigquery');
 
@@ -38,7 +44,14 @@ exports.main = (req, res) => {
     const bigquery = new BigQuery({projectId: GCP_PROJECT_ID});
 
     // The SQL query to run
-    let sqlQuery = `SELECT TIMESTAMP_MILLIS(CAST(FLOOR(ts/${CCU_AGGREGATION_PERIOD_MS}) * ${CCU_AGGREGATION_PERIOD_MS} AS INT64)) AS time, COUNT(distinct sessionid) AS ccu, jobid AS jobid, TIMESTAMP_MILLIS(MAX(rx_at)) AS last_rx_at FROM ${GCP_DATASET}.${GCP_TABLE} WHERE ts > ${time_out_ms}  AND ts <= ${time_in_ms} GROUP BY time, jobid ORDER BY time ASC`;
+    let sqlQuery = `SELECT TIMESTAMP_MILLIS(CAST(FLOOR(ts/${CCU_AGGREGATION_PERIOD_MS}) * ${CCU_AGGREGATION_PERIOD_MS} AS INT64)) AS time,
+        COUNT( distinct IF(source = '${enBeaconOriginFlag.SERVER_SIDE}', sessionid , NULL)  ) AS ssccu,
+        COUNT( distinct IF(source = '${enBeaconOriginFlag.CLIENT_SIDE}', sessionid , NULL) ) AS csccu,
+        jobid AS jobid,
+        TIMESTAMP_MILLIS(MAX(rx_at)) AS last_rx_at 
+        FROM ${GCP_DATASET}.${GCP_TABLE} 
+        WHERE ts > ${time_out_ms} AND ts <= ${time_in_ms} 
+        GROUP BY time, jobid ORDER BY time ASC`;
 
     // Query options list: https://cloud.google.com/bigquery/docs/reference/v2/jobs/query
     const options = {
@@ -88,8 +101,9 @@ function createEntityFromBQObj(datastore, kind, data) {
         data: [
             { name: 'jobid', value: data.jobid },
             { name: 'time', value: new Date(data.time.value) },
-            { name: 'ccu', value: data.ccu, excludeFromIndexes: true },
-            { name: 'last_rx_at', value: new Date(), excludeFromIndexes: true }
+            { name: 'ssccu', value: data.ssccu, excludeFromIndexes: true },
+            { name: 'csccu', value: data.csccu, excludeFromIndexes: true },
+            { name: 'last_rx_at', value: new Date(data.last_rx_at.value), excludeFromIndexes: true }
         ]
     };
 

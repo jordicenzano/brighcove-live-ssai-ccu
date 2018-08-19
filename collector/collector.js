@@ -7,6 +7,15 @@
 // For local testing remember to set the following env variable to your creds file allowing to send data to BigQuery
 // GOOGLE_APPLICATION_CREDENTIALS="[PATH]"
 
+const SERVER_SIDE_HEARTBEAT_NAME = 'heartbeat';
+const CLIENT_SIDE_HEARTBEAT_NAME = 'csheartbeat';
+
+// Beacon source ID in BiqQuery (should be the same used in aggregator)
+const enBeaconOriginFlag = {
+    CLIENT_SIDE: 'cs',
+    SERVER_SIDE: 'ss'
+};
+
 // Imports common functions
 const utils = require('./utils');
 
@@ -23,7 +32,7 @@ const app = express();
 const GCP_PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT; // From GCP
 const GCP_DATASET = process.env.GCP_DATASET;
 const GCP_TABLE = process.env.GCP_TABLE;
-const SHARED_BEACON_SECRET = process.env.SHARED_BEACON_SECRET || "";
+const SHARED_BEACON_SERVER_SIDE_SECRET = process.env.SHARED_BEACON_SERVER_SIDE_SECRET || "";
 
 console.log(logToString('CONFIGGCP','', `GCPProjectID:${GCP_PROJECT_ID},GCP_DATASET:${GCP_DATASET},GCP_TABLE:${GCP_TABLE}`));
 
@@ -38,12 +47,12 @@ const bigquery = new BigQuery({
 });
 
 // Receive beacon
-app.get('/:guid/:jobid/:sessionid/:account_billing_id/:tsepoch/heartbeat', function (req, res, next) {
+app.get('/:guid/:jobid/:sessionid/:account_billing_id/:tsepoch/:heartbeat', function (req, res, next) {
     const start_exec = new Date();
 
-    // Check if the request is legit if we enable api validation
-    if ((SHARED_BEACON_SECRET !== "")&&(SHARED_BEACON_SECRET !== "none")) {
-        if (SHARED_BEACON_SECRET !== req.get('x-api-key'))
+    // Check if the server side request is legit (If secret validation is enabled)
+    if ((SHARED_BEACON_SERVER_SIDE_SECRET !== "")&&(SHARED_BEACON_SERVER_SIDE_SECRET !== "none")) {
+        if (SHARED_BEACON_SERVER_SIDE_SECRET !== req.get('x-api-key'))
             return next(createError(401, 'Request NOT authorized'));
     }
 
@@ -116,6 +125,9 @@ function checkInputParams (params) {
     if (utils.checkSimpleNumber(params.tsepoch, 64) === false)
         err = createError(400, 'tsepoch wrong format');
 
+    if ((params.heartbeat !== SERVER_SIDE_HEARTBEAT_NAME) && (params.heartbeat !== CLIENT_SIDE_HEARTBEAT_NAME))
+        err = createError(400, 'heartbeat wrong name');
+
     return err;
 }
 
@@ -154,14 +166,20 @@ function fireDatapoint(dp, callback) {
 
 // Utils
 function createDatapointFromReqParams(params) {
-    return {
+    const ret = {
         ts: parseInt(params.tsepoch * 1000),
         rx_at: Date.now(),
         guid: params.guid,
         jobid: params.jobid,
         sessionid: params.sessionid,
-        vc_id: params.account_billing_id
+        vc_id: params.account_billing_id,
+        source: enBeaconOriginFlag.SERVER_SIDE
     };
+
+    if (params.heartbeat === CLIENT_SIDE_HEARTBEAT_NAME)
+        ret.source = enBeaconOriginFlag.CLIENT_SIDE;
+
+    return ret;
 }
 
 // Message to string

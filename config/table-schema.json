@@ -34,5 +34,11 @@
     "name": "vc_id",
     "type": "STRING",
     "mode": "REQUIRED"
+  },
+  {
+    "description": "Source of the beacon",
+    "name": "source",
+    "type": "STRING",
+    "mode": "REQUIRED"
   }
 ]

@@ -27,7 +27,13 @@ gcloud config set project $GCP_PROJECT_ID
 
 # Create BIGQUERY dataset
 # TODO: It promts to select the default project, but tre project is alredy specified in the command (GCP bug?)
-bq --location=$GCP_BIGQUERY_LOCATION mk --dataset --default_table_expiration $GCP_DATASET_EXPIRATION_S --description "Data for CCU calculation" $GCP_PROJECT_ID:$GCP_DATASET
+
+GCP_DATASET_EXPIRATION_STR=""
+if [[ "$GCP_DATASET_EXPIRATION_S" -ne 0 ]]; then
+    GCP_DATASET_EXPIRATION_STR="--default_table_expiration $GCP_DATASET_EXPIRATION_S"
+fi
+
+bq --location=$GCP_BIGQUERY_LOCATION mk --dataset $GCP_DATASET_EXPIRATION_STR --description "Data for CCU calculation" $GCP_PROJECT_ID:$GCP_DATASET
 
 # Create a BIGQUERY table for heartbeats and add schema
 bq mk --table --description "Table for the heartbeats beacons" $GCP_PROJECT_ID:$GCP_DATASET.$GCP_TABLE ./config/table-schema.json
@@ -51,9 +57,6 @@ cd $BASE_DIR/cf-databqexp
 # Deploy clouf function scheduler
 cd $BASE_DIR/cron-cloudfunctions
 ./GCP_deploy_cron_cloudfunctions.sh
-
-# //TODO: Automate Datastore creation
-# I think we do not have to do anything
 
 # Create DS index
 gcloud datastore create-indexes ./config/ds/index.yaml --quiet
