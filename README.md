@@ -1,18 +1,18 @@
 # brighcove-live-ssai-ccu
-This project is just a POC (proof of concept) to show a possible way to calculate the **real time** CCU (concurrent viewers) of any web resource, but it is focused to video streams. You can get the results via API (see [get CCU data using UI](##Using the UI)) or via UI (see [get CCU data using API](##Using the API)).
-This code works out of the box for any Brightcove live stream with SSAI (Server Side Ad Insertion) active. The code can also receive analytics client side (from the player) and offer a data comparison (server side vs client side).
-If you want to use also client side data you should implement a player side plug-in and send a beacon (HTTP[s] GET) to the following address every 1min (or less) during playback, recommended to send it every 30s. For [video-js](https://videojs.com/) is enough implementing a simple plug-in to do that.
+* This project is just a POC (proof of concept) to show a possible way to calculate the **real time** CCU (concurrent viewers) of any web resource, but it is focused to video streams. You can get the results via API (see [get CCU data using UI](##Using the UI)) or via UI (see [get CCU data using API](##Using the API)).
+* This code works out of the box for any Brightcove live stream with SSAI (Server Side Ad Insertion) active. The code can also receive analytics client side (from the player) and offer a data comparison (server side vs client side).
+* If you want to use also client side data you should implement a player side plug-in and send a beacon (HTTP[s] GET) to the following address every 1min (or less) during playback, recommended to send it every 30s. For [video-js](https://videojs.com/) is enough implementing a simple plug-in to do that.
 ```
 http://GCP_PROJECT_NAME.appspot.com/GUID/JOBID/SESSIONID/ACCOUNTID/EPOCH_S/csheartbeat
 ```
 Test example:
 ```
-curl http://myGCPProject-001.appspot.com/242bbf588a574e018de94136a664cfaf/142bbf588a574e018de94136a664cfaf/142bbf588a574e018de94136a664cfbc/123456789/1534640088/csheartbeat
+curl http://myGCPProjectTest-001.appspot.com/242bbf588a574e018de94136a664cfaf/142bbf588a574e018de94136a664cfaf/142bbf588a574e018de94136a664cfbc/123456789/1534640088/csheartbeat
 ```
 IMPORTANT NOTE: This project is creating resources on the user's GCP (Google Cloud Platform), if you measure CCU of high audiences streams you can incur in high GCP costs.
 
 # Block diagram
-![Block diagram](./pics/RT-CCU-v6.png "Block diagram")
+![Block diagram](./pics/RT-CCU-v7.png "Block diagram")
 
 1. The collectors receives the beacons from the field, those beacons can be sent from the Brightcove live backend (see example in [Deployment](#Deployment)), or from the player (needs some simple code there). Those collectors autoscales pretty quick according to appEngine default config.
 2. The collectors sends almost instantaneously the beacons to a BigQuery table.
