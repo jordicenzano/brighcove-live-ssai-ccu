@@ -12,8 +12,7 @@ curl http://myGCPProject-001.appspot.com/242bbf588a574e018de94136a664cfaf/142bbf
 IMPORTANT NOTE: This project is creating resources on the user's GCP (Google Cloud Platform), if you measure CCU of high audiences streams you can incur in high GCP costs.
 
 # Block diagram
-//TODO: JOC
-![Block diagram](./pics/RT-CCU-v4.png "Block diagram")
+![Block diagram](./pics/RT-CCU-v5.png "Block diagram")
 
 1. The collectors receives the beacons from the field, those beacons can be sent from the Brightcove live backend (see example in [Deployment](#Deployment)), or from the player (needs some simple code there). Those collectors autoscales pretty quick according to appEngine default config.
 2. The collectors sends almost instantaneously the beacons to a BigQuery table.
