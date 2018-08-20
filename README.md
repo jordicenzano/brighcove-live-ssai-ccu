@@ -1,6 +1,6 @@
 # brighcove-live-ssai-ccu
-This project is just a POC (proof of concept) to show a possible way to calculate the **real time** CCU (concurrent viewers) of any web resource, but it is focused to video streams.
-This code works out of the box for any Brightcove live stream with SSAI (Server Side Ad Insertion) active. The code can also receive analytics client side (from the player) and offer a data comparison (server side vs client side)
+This project is just a POC (proof of concept) to show a possible way to calculate the **real time** CCU (concurrent viewers) of any web resource, but it is focused to video streams. You can get the results via API (see [get CCU data using UI](##Using the UI)) or via UI (see [get CCU data using API](##Using the API)).
+This code works out of the box for any Brightcove live stream with SSAI (Server Side Ad Insertion) active. The code can also receive analytics client side (from the player) and offer a data comparison (server side vs client side).
 If you want to use also client side data you should implement a player side plug-in and send a beacon (HTTP[s] GET) to the following address every 1min (or less) during playback, recommended to send it every 30s. For [video-js](https://videojs.com/) is enough implementing a simple plug-in to do that.
 ```
 http://GCP_PROJECT_NAME.appspot.com/GUID/JOBID/SESSIONID/ACCOUNTID/EPOCH_S/csheartbeat
@@ -12,7 +12,7 @@ curl http://myGCPProject-001.appspot.com/242bbf588a574e018de94136a664cfaf/142bbf
 IMPORTANT NOTE: This project is creating resources on the user's GCP (Google Cloud Platform), if you measure CCU of high audiences streams you can incur in high GCP costs.
 
 # Block diagram
-![Block diagram](./pics/RT-CCU-v5.png "Block diagram")
+![Block diagram](./pics/RT-CCU-v6.png "Block diagram")
 
 1. The collectors receives the beacons from the field, those beacons can be sent from the Brightcove live backend (see example in [Deployment](#Deployment)), or from the player (needs some simple code there). Those collectors autoscales pretty quick according to appEngine default config.
 2. The collectors sends almost instantaneously the beacons to a BigQuery table.
@@ -43,7 +43,7 @@ Deployed service [default] to [https://GCP_PROJECT_NAME.appspot.com]
 API entry point:
 ```
 httpsTrigger:
-  url: https://GCP_CLOUD_FUNCTION_REGION-GCP_PROJECT_NAME.cloudfunctions.net/GCP_CLOUD_FUNCTION_NAME
+  url: https://GCP_CLOUD_FUNCTION_REGION-GCP_PROJECT_NAME.cloudfunctions.net/GCP_CLOUD_FUNCTION_API_CURRENT_NAME
 ```
 
 4. Create the following beacon set in Brightcove live. Assuming you already have a Brightcove live account (and API KEY). (Replace GCP_PROJECT_NAME )
@@ -94,9 +94,25 @@ curl -X POST \
 ```
 White down the `job_id` param that you will get from the previous request
 
-6. If you want to know the CCU of the previous job for the last minute you just need to execute (replacing: YOUR_API_SECRET, GCP_CLOUD_FUNCTION_REGION, GCP_PROJECT_NAME, GCP_CLOUD_FUNCTION_NAME, BCOV_LIVE_JOB_ID)
+# Reading the CCU data
+
+You can either use and API to get all the data details you want, or you can use a UI layer we build on top of that API.
+
+## Using the UI
+
+You have to render the webpage `./view/index.html` in any browser.
+
+You need to pass some parameters to the webpage via querystring to allow the page to get access to the correct data:
+`https://index.html?&apiep=https://GCP_CLOUD_FUNCTION_REGION-GCP_PROJECT_NAME.cloudfunctions.net/GCP_CLOUD_FUNCTION_API_CURRENT_NAME&secret=YOUR_API_SECRET&jobid=JOBID&in=EPOCH_IN_S&out=EPOCH_OUT_S`
+
+You should see something like this:
+![CCU UI example](./pics/ccu-graph.png "CCU UI Example")
+
+## Using the API
+
+If you want to know the CCU data and all the details, you can use the following REST API call tp get CCU for the last minute of the job BCOV_LIVE_JOB_ID (replacing: YOUR_API_SECRET, GCP_CLOUD_FUNCTION_REGION, GCP_PROJECT_NAME, GCP_CLOUD_FUNCTION_API_CURRENT_NAME, BCOV_LIVE_JOB_ID)
 ```
-curl -v --header "x-api-key: YOUR_API_SECRET" https://GCP_CLOUD_FUNCTION_REGION-GCP_PROJECT_NAME.cloudfunctions.net/GCP_CLOUD_FUNCTION_NAME?jobid=BCOV_LIVE_JOB_ID
+curl -v --header "x-api-key: YOUR_API_SECRET" https://GCP_CLOUD_FUNCTION_REGION-GCP_PROJECT_NAME.cloudfunctions.net/GCP_CLOUD_FUNCTION_API_CURRENT_NAME?jobid=BCOV_LIVE_JOB_ID
 ```
 
 Example response:
@@ -140,9 +156,9 @@ In the response you can find one data point for the last hour that with CCU grea
 * `ssccu`: CCU calculated using server side beacons
 * `csccu`: CCU calculated using client side beacons
 
-7. If you want to know the CCU of job (BCOV_LIVE_JOB_ID) for a time range (replacing: YOUR_API_SECRET, GCP_CLOUD_FUNCTION_REGION, GCP_PROJECT_NAME, GCP_CLOUD_FUNCTION_NAME, BCOV_LIVE_JOB_ID). If you do not specify any time by default it will return the last 1 hour.
+If you want to know the CCU of job (BCOV_LIVE_JOB_ID) for a time range (replacing: YOUR_API_SECRET, GCP_CLOUD_FUNCTION_REGION, GCP_PROJECT_NAME, GCP_CLOUD_FUNCTION_API_CURRENT_NAME, BCOV_LIVE_JOB_ID). If you do not specify any time by default it will return the last 1 hour.
 ```
-curl -v --header "x-api-key: YOUR_API_SECRET" https://GCP_CLOUD_FUNCTION_REGION-GCP_PROJECT_NAME.cloudfunctions.net/GCP_CLOUD_FUNCTION_NAME?jobid=BCOV_LIVE_JOB_ID\&in\=EPOCH_START_S\&out\=EPOCH_END_S
+curl -v --header "x-api-key: YOUR_API_SECRET" https://GCP_CLOUD_FUNCTION_REGION-GCP_PROJECT_NAME.cloudfunctions.net/GCP_CLOUD_FUNCTION_API_CURRENT_NAME?jobid=BCOV_LIVE_JOB_ID\&in\=EPOCH_START_S\&out\=EPOCH_END_S
 ```
 
 # Accuracy

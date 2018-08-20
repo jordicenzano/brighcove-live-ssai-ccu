@@ -12,6 +12,13 @@ const Datastore = require('@google-cloud/datastore');
 
 exports.main = (req, res) => {
 
+    // Add CORS from * (basically to allow calls from the browser)
+    addCORS(res);
+
+    // Respond to prefligh request
+    if (req.method == 'OPTIONS')
+        return res.status(204).send('');
+
     // Load env vars
     const GCP_PROJECT_ID = process.env.GCP_PROJECT; // From GCP
     const GCP_DS_KIND = process.env.GCP_DS_KIND;
@@ -92,4 +99,11 @@ function checkSimpleNumber (num, max_length, min_length = 0) {
         return false;
 
     return str.match(new RegExp(/^[0-9]+[\.]*[0-9]+]*$/)) != null;
+}
+
+function addCORS(res) {
+    res.set('Access-Control-Allow-Origin', "*");
+    res.set('Access-Control-Allow-Methods', 'GET,OPTIONS');
+    res.set("Access-Control-Allow-Headers", "Content-Type,x-api-key");
+    res.set("Access-Control-Max-Age", "3600");
 }
